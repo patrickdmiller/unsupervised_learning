@@ -10,7 +10,7 @@ pd.set_option('display.max_rows', None)
 
 class Framingham(Dataset):
     
-    def load(self):
+    def load(self, load_param=None):
         self.df = pd.read_csv(os.path.join(CONST.DATA_PATH, 'framingham/data.csv'))
         
     def __init__(self,test_size = 0.3, verbose=False,scale=True, oversample=True):

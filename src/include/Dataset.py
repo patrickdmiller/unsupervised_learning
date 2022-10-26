@@ -12,11 +12,13 @@ class Dataset(ABC):
   subclasses must implement load function that populates self.df or returns df
   '''
   @abstractmethod
-  def load(self):
+  def load(self, load_param=None):
     pass
 
-  def __init__(self, test_size=0.3, verbose=False, oversample = False, scale = True, scale_type=StandardScaler(), label_col = None, onehots = []):
-    self.load()
+  def __init__(self, test_size=0.3, verbose=False, oversample = False, scale = True, scale_type=StandardScaler(), label_col = None, onehots = [], load_param=None):
+    self.verbose = verbose
+
+    self.load(load_param)
     
     if not label_col or label_col not in self.df:
       raise Exception("no label specified")
@@ -24,7 +26,6 @@ class Dataset(ABC):
     if verbose:
       print(type(self))
     self.label_col = label_col
-    self.verbose = verbose
     self.do_onehot(col_names=onehots, drop=True)
     if scale:
       self.scaler = scale_type
@@ -42,8 +43,6 @@ class Dataset(ABC):
         self.X_train, self.y_train = _oversample.fit_resample(self.X_train, self.y_train)
     if verbose:
         print("after resample\nsplit: Train: ", len(self.X_train), len(self.y_train), "Test: ", len(self.X_test), len(self.y_test))
-    else:
-        print("no resampling")
         
   def do_onehot(self, col_names, drop = True):
       #change strings to categorical floats. 
@@ -63,15 +62,16 @@ class Dataset(ABC):
       cols = set()
       over_cols = self.df.max()
       for key in over_cols.keys():
+        # print(key, over_cols[key], type(over_cols[key]))
         if over_cols[key] > 10:
           cols.add(key)
-          print("over > ", key, over_cols[key])
       under_cols = self.df.min()
       for key in under_cols.keys():
         if under_cols[key] < -10:
-          print("under> ", key, under_cols[key])
           cols.add(key)
       to_scale = list(cols)
+      if self.verbose:
+        print("scaling", to_scale)
       self.df[to_scale] = self.scaler.fit_transform(self.df[to_scale])
 
   def describe(self):
