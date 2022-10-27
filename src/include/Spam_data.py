@@ -10,7 +10,7 @@ import os
 import re
 class Spam(Dataset):
     
-  def load(self):
+  def load(self, load_param=None):
     with open(os.path.join(CONST.DATA_PATH, 'spam/spambase.names')) as f:
       lines = f.readlines()
     lines = list(map(lambda l: re.sub(':.+\n?','', l), lines))

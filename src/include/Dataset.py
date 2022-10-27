@@ -14,10 +14,13 @@ class Dataset(ABC):
   @abstractmethod
   def load(self, load_param=None):
     pass
+  
+  def after_load(self):
+    pass
 
-  def __init__(self, test_size=0.3, verbose=False, oversample = False, scale = True, scale_type=StandardScaler(), label_col = None, onehots = [], load_param=None):
+  def __init__(self, test_size=0.3, verbose=False, oversample = False, scale = True, scale_type='ss', label_col = None, onehots = [], load_param=None, seed=42, name="Dataset"):
     self.verbose = verbose
-
+    self.name = name
     self.load(load_param)
     
     if not label_col or label_col not in self.df:
@@ -28,22 +31,33 @@ class Dataset(ABC):
     self.label_col = label_col
     self.do_onehot(col_names=onehots, drop=True)
     if scale:
-      self.scaler = scale_type
+      if scale_type == 'ss':
+        self.scaler = StandardScaler()
+      elif scale_type == 'mm':
+        self.scaler = MinMaxScaler()
+      if verbose:
+        print("Scale type: ", self.scaler)
       self.do_scale()
               
     self.y = self.df[label_col].to_frame()
     self.X = self.df.drop([label_col], axis=1)
     
-    self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size=test_size, random_state=1)
+    self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size=test_size, random_state=seed)
     
+    #if custom logic after shuffling and splitting (like dropping an item)
+    self.after_load()
+    
+    #post shuffle
+    # self.df = pd.concat([self.X, self.y], axis=1)
     if verbose:
         print("split: Train: ", len(self.X_train), len(self.y_train), "Test: ", len(self.X_test), len(self.y_test))
     if oversample:
         _oversample =  RandomOverSampler(sampling_strategy='minority')
         self.X_train, self.y_train = _oversample.fit_resample(self.X_train, self.y_train)
-    if verbose:
+    if verbose and oversample:
         print("after resample\nsplit: Train: ", len(self.X_train), len(self.y_train), "Test: ", len(self.X_test), len(self.y_test))
-        
+    self.df_train = pd.concat([self.X_train, self.y_train], axis=1)
+
   def do_onehot(self, col_names, drop = True):
       #change strings to categorical floats. 
       for col_name in col_names:
@@ -89,5 +103,5 @@ class Dataset(ABC):
     print("\ttotal true: ", len(self.y_test.loc[self.y_test[self.label_col] == 1]), "total false: ", len(self.y_test.loc[self.y_test[self.label_col] == 0]))
 
   def generate_validation(self, validation_percent_of_training=0.2):
-      self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(self.X_train, self.y_train, test_size=validation_percent_of_training, random_state=1) 
+      self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(self.X_train, self.y_train, test_size=validation_percent_of_training, random_state=42) 
       print("after validation\n Train: ", len(self.X_train), len(self.y_train), "Val: ", len(self.X_val), len(self.y_val), "Test:", len(self.X_test), len(self.y_test))
