@@ -38,7 +38,9 @@ class Dataset(ABC):
       if verbose:
         print("Scale type: ", self.scaler)
       self.do_scale()
-              
+    if verbose:
+      print("all data positive : ", len(self.df[self.df[label_col] == 1]), "neg: ", len(self.df[self.df[label_col] == 0]))
+
     self.y = self.df[label_col].to_frame()
     self.X = self.df.drop([label_col], axis=1)
     
@@ -47,15 +49,16 @@ class Dataset(ABC):
     #if custom logic after shuffling and splitting (like dropping an item)
     self.after_load()
     
-    #post shuffle
-    # self.df = pd.concat([self.X, self.y], axis=1)
     if verbose:
         print("split: Train: ", len(self.X_train), len(self.y_train), "Test: ", len(self.X_test), len(self.y_test))
+        print("train positive : ", len(self.y_train[self.y_train[label_col] == 1]), "neg: ", len(self.y_train[self.y_train[label_col] == 0]))
     if oversample:
         _oversample =  RandomOverSampler(sampling_strategy='minority')
         self.X_train, self.y_train = _oversample.fit_resample(self.X_train, self.y_train)
     if verbose and oversample:
         print("after resample\nsplit: Train: ", len(self.X_train), len(self.y_train), "Test: ", len(self.X_test), len(self.y_test))
+        print("train positive : ", len(self.y_train[self.y_train[label_col] == 1]), "neg: ", len(self.y_train[self.y_train[label_col] == 0]))
+
     self.df_train = pd.concat([self.X_train, self.y_train], axis=1)
 
   def do_onehot(self, col_names, drop = True):
