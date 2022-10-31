@@ -22,7 +22,7 @@ class Dataset(ABC):
     self.verbose = verbose
     self.name = name
     self.load(load_param)
-    
+    self.models = {}
     if not label_col or label_col not in self.df:
       raise Exception("no label specified")
     
