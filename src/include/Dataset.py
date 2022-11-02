@@ -3,11 +3,24 @@ from sklearn.preprocessing import OneHotEncoder, MinMaxScaler, StandardScaler
 from sklearn.model_selection import train_test_split
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
-
+import pickle
 from abc import ABC, abstractmethod
 import os
-
+from include import const as CONST
 class Dataset(ABC):
+  
+  _type=None
+  
+  @classmethod
+  def load_pickle(cls, file_name):
+    print("loading pickle: ", os.path.join(CONST.DATA_PATH, 'pickles/', f'{file_name}.pickle'))
+    file = open(os.path.join(CONST.DATA_PATH, 'pickles/', f'{file_name}.pickle'),'rb')
+    object_file = pickle.load(file)
+    print(object_file)
+    file.close()  
+    return object_file
+
+
   '''
   subclasses must implement load function that populates self.df or returns df
   '''
@@ -18,7 +31,10 @@ class Dataset(ABC):
   def after_load(self):
     pass
 
-  def __init__(self, test_size=0.3, verbose=False, oversample = False, scale = True, scale_type='ss', label_col = None, onehots = [], load_param=None, seed=42, name="Dataset"):
+
+
+
+  def __init__(self, test_size=0.3, verbose=False, oversample = False, undersample=False, scale = True, scale_type='ss', label_col = None, onehots = [], load_param=None, seed=42, name="Dataset"):
     self.verbose = verbose
     self.name = name
     self.load(load_param)
@@ -55,7 +71,10 @@ class Dataset(ABC):
     if oversample:
         _oversample =  RandomOverSampler(sampling_strategy='minority')
         self.X_train, self.y_train = _oversample.fit_resample(self.X_train, self.y_train)
-    if verbose and oversample:
+    if undersample:
+        _undersample = RandomUnderSampler(sampling_strategy='majority')
+        self.X_train, self.y_train = _undersample.fit_resample(self.X_train, self.y_train)
+    if verbose and (oversample or undersample):
         print("after resample\nsplit: Train: ", len(self.X_train), len(self.y_train), "Test: ", len(self.X_test), len(self.y_test))
         print("train positive : ", len(self.y_train[self.y_train[label_col] == 1]), "neg: ", len(self.y_train[self.y_train[label_col] == 0]))
 
@@ -108,3 +127,8 @@ class Dataset(ABC):
   def generate_validation(self, validation_percent_of_training=0.2):
       self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(self.X_train, self.y_train, test_size=validation_percent_of_training, random_state=42) 
       print("after validation\n Train: ", len(self.X_train), len(self.y_train), "Val: ", len(self.X_val), len(self.y_val), "Test:", len(self.X_test), len(self.y_test))
+      
+      
+  def pickle(self):
+    with open(os.path.join(CONST.DATA_PATH, 'pickles/', f'{self.name}.pickle'), 'wb') as handle:
+      pickle.dump(self, handle, protocol=pickle.HIGHEST_PROTOCOL)
