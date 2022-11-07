@@ -16,7 +16,6 @@ class Wine(Dataset):
     return super().load_pickle(cls._type)
   
   def load(self, load_param):  
-    white = pd.read_csv(os.path.join(CONST.DATA_PATH, f'wine/winequality-white.csv'), dtype=np.float64, sep=';')
     # white['color']=0
     red= pd.read_csv(os.path.join(CONST.DATA_PATH, f'wine/winequality-red.csv'), dtype=np.float64, sep=';')
     red['color']=1
