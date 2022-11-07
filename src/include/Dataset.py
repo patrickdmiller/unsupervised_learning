@@ -99,11 +99,11 @@ class Dataset(ABC):
       over_cols = self.df.max()
       for key in over_cols.keys():
         # print(key, over_cols[key], type(over_cols[key]))
-        if over_cols[key] > 10:
+        if over_cols[key] > 1:
           cols.add(key)
       under_cols = self.df.min()
       for key in under_cols.keys():
-        if under_cols[key] < -10:
+        if under_cols[key] < -1:
           cols.add(key)
       to_scale = list(cols)
       if self.verbose:
